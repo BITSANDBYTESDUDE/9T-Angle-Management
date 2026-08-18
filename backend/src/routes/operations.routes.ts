@@ -1,0 +1,16 @@
+import { Router } from "express";
+import type { NextFunction, Request, Response } from "express";
+import * as controller from "../controllers/operations.controller.js";
+import { authorize, requireAuth } from "../middlewares/auth.js";
+import { validate } from "../middlewares/validate.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiError } from "../utils/ApiError.js";
+import { operationCreateSchemas, operationUpdateSchema } from "../validators/schemas.js";
+const router = Router(); router.use(requireAuth, authorize("admin", "manager"));
+const validType = (req: Request, _res: Response, next: NextFunction) => ["products", "listings", "orders"].includes(String(req.params.type)) ? next() : next(new ApiError(404, "Operation type not found."));
+const validateCreate = (req: Request, res: Response, next: NextFunction) => validate(operationCreateSchemas[String(req.params.type) as keyof typeof operationCreateSchemas])(req, res, next);
+router.get("/:type", validType, asyncHandler(controller.list));
+router.post("/:type", validType, validateCreate, asyncHandler(controller.create));
+router.put("/:type/:id", validType, validate(operationUpdateSchema), asyncHandler(controller.update));
+router.delete("/:type/:id", validType, asyncHandler(controller.remove));
+export default router;

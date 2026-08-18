@@ -1,0 +1,3 @@
+import * as AvatarPrimitive from "@radix-ui/react-avatar";
+import { cn, initials } from "@/lib/utils";
+export function Avatar({ name, src, className }: { name?: string; src?: string; className?: string }) { return <AvatarPrimitive.Root className={cn("inline-flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-sm font-bold text-primary", className)}>{src && <AvatarPrimitive.Image src={src} alt={name || "Profile"} className="h-full w-full object-cover" />}<AvatarPrimitive.Fallback delayMs={300}>{initials(name)}</AvatarPrimitive.Fallback></AvatarPrimitive.Root>; }

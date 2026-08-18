@@ -1,0 +1,15 @@
+import { Router } from "express";
+import * as controller from "../controllers/auth.controller.js";
+import { requireAuth } from "../middlewares/auth.js";
+import { validate } from "../middlewares/validate.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { changePasswordSchema, forgotSchema, loginSchema, profileSchema, resetSchema } from "../validators/schemas.js";
+const router = Router();
+router.post("/login", validate(loginSchema), asyncHandler(controller.login));
+router.post("/logout", asyncHandler(controller.logout));
+router.get("/me", requireAuth, asyncHandler(controller.me));
+router.patch("/change-password", requireAuth, validate(changePasswordSchema), asyncHandler(controller.changePassword));
+router.post("/forgot-password", validate(forgotSchema), asyncHandler(controller.forgotPassword));
+router.post("/reset-password/:token", validate(resetSchema), asyncHandler(controller.resetPassword));
+router.patch("/profile", requireAuth, validate(profileSchema), asyncHandler(controller.updateProfile));
+export default router;

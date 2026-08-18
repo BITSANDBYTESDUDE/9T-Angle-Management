@@ -1,0 +1,14 @@
+import { Router } from "express";
+import * as controller from "../controllers/task.controller.js";
+import { authorize, requireAuth } from "../middlewares/auth.js";
+import { validate } from "../middlewares/validate.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { idSchema, taskCreateSchema, taskProgressSchema, taskUpdateSchema } from "../validators/schemas.js";
+const router = Router(); router.use(requireAuth);
+router.get("/", asyncHandler(controller.list));
+router.post("/", authorize("admin", "manager"), validate(taskCreateSchema), asyncHandler(controller.create));
+router.get("/:id", validate(idSchema), asyncHandler(controller.get));
+router.put("/:id", authorize("admin", "manager"), validate(taskUpdateSchema), asyncHandler(controller.update));
+router.patch("/:id/progress", validate(taskProgressSchema), asyncHandler(controller.progress));
+router.delete("/:id", authorize("admin", "manager"), validate(idSchema), asyncHandler(controller.remove));
+export default router;

@@ -1,0 +1,15 @@
+import { Router } from "express";
+import * as controller from "../controllers/reference.controller.js";
+import { authorize, requireAuth } from "../middlewares/auth.js";
+import { validate } from "../middlewares/validate.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { departmentSchema, roleSchema, settingsSchema } from "../validators/schemas.js";
+const router = Router(); router.use(requireAuth);
+router.get("/", authorize("admin", "manager"), asyncHandler(controller.references));
+router.post("/roles", authorize("admin"), validate(roleSchema), asyncHandler(controller.createRole));
+router.put("/roles/:id", authorize("admin"), asyncHandler(controller.updateRole));
+router.post("/departments", authorize("admin"), validate(departmentSchema), asyncHandler(controller.createDepartment));
+router.put("/departments/:id", authorize("admin"), asyncHandler(controller.updateDepartment));
+router.get("/settings", authorize("admin"), asyncHandler(controller.getSettings));
+router.put("/settings", authorize("admin"), validate(settingsSchema), asyncHandler(controller.updateSettings));
+export default router;

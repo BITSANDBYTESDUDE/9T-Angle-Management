@@ -1,0 +1,18 @@
+import { Router } from "express";
+import * as controller from "../controllers/report.controller.js";
+import { exportReport } from "../controllers/export.controller.js";
+import { authorize, requireAuth } from "../middlewares/auth.js";
+import { upload } from "../middlewares/upload.js";
+import { validate } from "../middlewares/validate.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { idSchema, reportCreateSchema, reportReviewSchema, reportUpdateSchema } from "../validators/schemas.js";
+const router = Router(); router.use(requireAuth);
+router.get("/export", authorize("admin", "manager"), asyncHandler(exportReport));
+router.post("/upload", upload.array("files", 5), asyncHandler(controller.uploadEvidence));
+router.get("/daily", asyncHandler(controller.list));
+router.post("/daily", validate(reportCreateSchema), asyncHandler(controller.create));
+router.get("/daily/:id", validate(idSchema), asyncHandler(controller.get));
+router.put("/daily/:id", validate(reportUpdateSchema), asyncHandler(controller.update));
+router.patch("/daily/:id/review", authorize("admin", "manager"), validate(reportReviewSchema), asyncHandler(controller.review));
+router.delete("/daily/:id", validate(idSchema), asyncHandler(controller.remove));
+export default router;

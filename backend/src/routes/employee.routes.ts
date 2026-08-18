@@ -1,0 +1,15 @@
+import { Router } from "express";
+import { z } from "zod";
+import * as controller from "../controllers/employee.controller.js";
+import { authorize, requireAuth } from "../middlewares/auth.js";
+import { validate } from "../middlewares/validate.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { employeeCreateSchema, employeeUpdateSchema, idSchema } from "../validators/schemas.js";
+const router = Router(); router.use(requireAuth, authorize("admin", "manager"));
+router.get("/", asyncHandler(controller.list));
+router.post("/", authorize("admin"), validate(employeeCreateSchema), asyncHandler(controller.create));
+router.get("/:id", validate(idSchema), asyncHandler(controller.get));
+router.put("/:id", authorize("admin"), validate(employeeUpdateSchema), asyncHandler(controller.update));
+router.patch("/:id/status", authorize("admin"), validate(z.object({ params: z.object({ id: z.string().regex(/^[a-f\d]{24}$/i) }), body: z.object({ status: z.enum(["active", "disabled"]) }) })), asyncHandler(controller.changeStatus));
+router.delete("/:id", authorize("admin"), validate(idSchema), asyncHandler(controller.remove));
+export default router;

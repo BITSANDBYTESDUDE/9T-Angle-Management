@@ -1,0 +1,3 @@
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "../ui/button";
+export function Pagination({ page, pages, onChange }: { page: number; pages: number; onChange: (page: number) => void }) { return <div className="mt-4 flex items-center justify-between"><p className="text-xs text-muted-foreground">Page {page} of {Math.max(1, pages)}</p><div className="flex gap-2"><Button variant="outline" size="sm" disabled={page <= 1} onClick={() => onChange(page - 1)}><ChevronLeft className="h-4 w-4"/> Previous</Button><Button variant="outline" size="sm" disabled={page >= pages} onClick={() => onChange(page + 1)}>Next <ChevronRight className="h-4 w-4"/></Button></div></div>; }
