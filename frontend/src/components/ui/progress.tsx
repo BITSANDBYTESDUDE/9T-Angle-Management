@@ -1,0 +1,3 @@
+import * as ProgressPrimitive from "@radix-ui/react-progress";
+import { cn } from "@/lib/utils";
+export function Progress({ value = 0, className, indicatorClassName }: { value?: number; className?: string; indicatorClassName?: string }) { const safe = Math.max(0, Math.min(100, value)); return <ProgressPrimitive.Root className={cn("relative h-2.5 w-full overflow-hidden rounded-full bg-slate-100", className)} value={safe}><ProgressPrimitive.Indicator className={cn("h-full rounded-full bg-primary transition-all duration-500", value >= 100 ? "bg-emerald-500" : value < 50 ? "bg-amber-500" : "", indicatorClassName)} style={{ transform: `translateX(-${100 - safe}%)` }} /></ProgressPrimitive.Root>; }

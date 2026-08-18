@@ -1,0 +1,12 @@
+import { Router } from "express";
+import * as controller from "../controllers/attendance.controller.js";
+import { authorize, requireAuth } from "../middlewares/auth.js";
+import { validate } from "../middlewares/validate.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { attendanceAdminSchema } from "../validators/schemas.js";
+const router = Router(); router.use(requireAuth);
+router.get("/", asyncHandler(controller.list));
+router.post("/check-in", authorize("employee"), asyncHandler(controller.checkIn));
+router.post("/check-out", authorize("employee"), asyncHandler(controller.checkOut));
+router.put("/record", authorize("admin", "manager"), validate(attendanceAdminSchema), asyncHandler(controller.upsert));
+export default router;

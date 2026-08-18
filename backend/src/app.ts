@@ -1,0 +1,26 @@
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import compression from "compression";
+import cookieParser from "cookie-parser";
+import morgan from "morgan";
+import rateLimit from "express-rate-limit";
+import routes from "./routes/index.js";
+import { env } from "./config/env.js";
+import { errorHandler, notFound } from "./middlewares/errorHandler.js";
+
+export const app = express();
+app.set("trust proxy", 1);
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
+app.use(cors({ credentials: true, origin(origin, callback) { if (!origin || origin === env.FRONTEND_URL || /^https?:\/\/localhost:\d+$/.test(origin) || /^https:\/\/[^/]+\.e2b\.app$/.test(origin)) return callback(null, true); callback(new Error("Origin not allowed by CORS")); } }));
+app.use(compression());
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
+app.use(cookieParser());
+if (env.NODE_ENV !== "test") app.use(morgan(env.NODE_ENV === "production" ? "combined" : "dev"));
+app.use("/api/auth", rateLimit({ windowMs: 15 * 60 * 1000, limit: 50, standardHeaders: "draft-8", legacyHeaders: false }));
+app.use("/api", rateLimit({ windowMs: 15 * 60 * 1000, limit: 1000, standardHeaders: "draft-8", legacyHeaders: false }));
+app.get("/health", (_req, res) => res.json({ status: "ok", service: "9T-Angle API", timestamp: new Date().toISOString() }));
+app.use("/api", routes);
+app.use(notFound);
+app.use(errorHandler);

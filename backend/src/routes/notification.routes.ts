@@ -1,0 +1,12 @@
+import { Router } from "express";
+import * as controller from "../controllers/notification.controller.js";
+import { authorize, requireAuth } from "../middlewares/auth.js";
+import { validate } from "../middlewares/validate.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { announcementSchema, notificationReadSchema } from "../validators/schemas.js";
+const router = Router(); router.use(requireAuth);
+router.get("/", asyncHandler(controller.list));
+router.patch("/read-all", asyncHandler(controller.readAll));
+router.patch("/:id/read", validate(notificationReadSchema), asyncHandler(controller.read));
+router.post("/announcement", authorize("admin"), validate(announcementSchema), asyncHandler(controller.createAnnouncement));
+export default router;

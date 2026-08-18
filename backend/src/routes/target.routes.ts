@@ -1,0 +1,12 @@
+import { Router } from "express";
+import * as controller from "../controllers/target.controller.js";
+import { authorize, requireAuth } from "../middlewares/auth.js";
+import { validate } from "../middlewares/validate.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { idSchema, targetCreateSchema, targetUpdateSchema } from "../validators/schemas.js";
+const router = Router(); router.use(requireAuth);
+router.get("/", asyncHandler(controller.list));
+router.post("/", authorize("admin", "manager"), validate(targetCreateSchema), asyncHandler(controller.create));
+router.put("/:id", authorize("admin", "manager"), validate(targetUpdateSchema), asyncHandler(controller.update));
+router.delete("/:id", authorize("admin", "manager"), validate(idSchema), asyncHandler(controller.remove));
+export default router;
