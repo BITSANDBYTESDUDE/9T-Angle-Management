@@ -19,6 +19,11 @@ export async function createTarget(input: any, userId: string) {
   return (await Target.create({ ...input, createdBy: userId })).populate(["employee", "role"]);
 }
 export async function updateTarget(id: string, input: any) {
+  const existing = await Target.findById(id).lean();
+  if (!existing) throw new ApiError(404, "Target not found.");
+  const start = input.startDate ? new Date(input.startDate) : existing.startDate;
+  const end = input.endDate ? new Date(input.endDate) : existing.endDate;
+  if (end < start) throw new ApiError(422, "Target end date must be on or after its start date.");
   const target = await Target.findByIdAndUpdate(id, input, { new: true, runValidators: true }).populate("employee", "fullName profileImage position").populate("role");
   if (!target) throw new ApiError(404, "Target not found.");
   return target;

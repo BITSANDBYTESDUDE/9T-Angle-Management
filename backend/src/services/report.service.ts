@@ -1,4 +1,4 @@
-import { DailyReport, Employee, User } from "../models/index.js";
+import { DailyReport, Employee, Task } from "../models/index.js";
 import { ApiError } from "../utils/ApiError.js";
 import { endOfDay, startOfDay } from "../utils/dates.js";
 import { notifyEmployee } from "./notification.service.js";
@@ -31,6 +31,10 @@ export async function createReport(input: any, requester: NonNullable<Express.Re
   if (!employeeId || !(await Employee.exists({ _id: employeeId }))) throw new ApiError(422, "A valid employee is required.");
   const date = startOfDay(input.date);
   if (requester.role === "employee" && date > startOfDay()) throw new ApiError(422, "You cannot submit a report for a future date.");
+  if (input.tasksCompleted?.length) {
+    const ownedTasks = await Task.countDocuments({ _id: { $in: input.tasksCompleted }, assignedTo: employeeId });
+    if (ownedTasks !== new Set(input.tasksCompleted.map(String)).size) throw new ApiError(422, "A report can include only tasks assigned to that employee.");
+  }
   const report = await DailyReport.create({ ...input, employee: employeeId, date, ...(input.status === "submitted" ? { submittedAt: new Date() } : {}) });
   return getReport(String(report._id), requester);
 }
@@ -40,6 +44,10 @@ export async function updateReport(id: string, input: any, requester: NonNullabl
   if (requester.role === "employee" && String(report.employee) !== requester.employeeId) throw new ApiError(403, "You can only edit your own reports.");
   if (requester.role === "employee" && report.status === "reviewed") throw new ApiError(409, "An approved report cannot be changed.");
   if (requester.role === "employee" && !["draft", "rejected"].includes(report.status)) throw new ApiError(409, "A submitted report cannot be changed until a manager requests a correction.");
+  if (input.tasksCompleted?.length) {
+    const ownedTasks = await Task.countDocuments({ _id: { $in: input.tasksCompleted }, assignedTo: report.employee });
+    if (ownedTasks !== new Set(input.tasksCompleted.map(String)).size) throw new ApiError(422, "A report can include only tasks assigned to that employee.");
+  }
   Object.assign(report, input);
   if (input.date) report.date = startOfDay(input.date);
   if (input.status === "submitted") report.submittedAt = new Date();

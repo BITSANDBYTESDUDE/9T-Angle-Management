@@ -11,6 +11,7 @@ export async function list(req: Request, res: Response) {
 export async function get(req: Request, res: Response) {
   if (req.user!.role === "employee" && String(req.params.employeeId) !== req.user!.employeeId) throw new ApiError(403, "You can only view your performance.");
   const type = String(req.query.period || "monthly") as service.PeriodType;
+  if (!["daily", "weekly", "monthly"].includes(type)) throw new ApiError(422, "Invalid performance period.");
   return success(res, await service.getPerformance(String(req.params.employeeId), type, req.query.startDate ? String(req.query.startDate) : undefined, req.query.endDate ? String(req.query.endDate) : undefined));
 }
 export async function weekly(_req: Request, res: Response) { return success(res, await service.generateWeekly(), "Weekly reports generated successfully."); }

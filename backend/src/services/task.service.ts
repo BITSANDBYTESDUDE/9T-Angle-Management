@@ -46,6 +46,12 @@ export async function updateTask(id: string, input: any) {
   const original = await Task.findById(id);
   if (!original) throw new ApiError(404, "Task not found.");
   if (input.completedQuantity !== undefined) delete input.completedQuantity;
+  const nextStart = input.startDate ? new Date(input.startDate) : original.startDate;
+  const nextDue = input.dueDate ? new Date(input.dueDate) : original.dueDate;
+  if (nextDue < nextStart) throw new ApiError(422, "Due date must be after the task start date.");
+  if (input.targetQuantity !== undefined && input.targetQuantity < original.completedQuantity) throw new ApiError(422, "Target quantity cannot be lower than work already completed.");
+  if (input.assignedTo && String(input.assignedTo) !== String(original.assignedTo) && original.completedQuantity > 0) throw new ApiError(409, "A task with recorded progress cannot be reassigned. Create a new task or reset progress first.");
+  if (input.status === "completed" && original.completedQuantity < (input.targetQuantity || original.targetQuantity)) throw new ApiError(422, "Update progress to the target before marking this task complete.");
   const task = await Task.findByIdAndUpdate(id, input, { new: true, runValidators: true });
   if (input.assignedTo && String(input.assignedTo) !== String(original.assignedTo)) await notifyEmployee(input.assignedTo, "task-assigned", "Task assigned to you", task!.title, `/tasks/${id}`, { taskId: id });
   return getTask(id, { id: "", role: "admin" });
@@ -65,11 +71,15 @@ export async function updateProgress(id: string, input: any, requester: NonNulla
   await task.save();
   if (delta !== 0) {
     const now = new Date();
-    await Target.updateMany({ employee: task.assignedTo, isActive: true, startDate: { $lte: now }, endDate: { $gte: now } }, { $inc: { completedQuantity: delta } });
+    await Target.updateMany({ employee: task.assignedTo, isActive: true, startDate: { $lte: now }, endDate: { $gte: now } }, [{ $set: { completedQuantity: { $max: [0, { $add: ["$completedQuantity", delta] }] } } }]);
   }
   return getTask(id, requester);
 }
 export async function deleteTask(id: string) {
   const task = await Task.findByIdAndDelete(id);
   if (!task) throw new ApiError(404, "Task not found.");
+  if (task.completedQuantity > 0) {
+    const now = new Date();
+    await Target.updateMany({ employee: task.assignedTo, isActive: true, startDate: { $lte: now }, endDate: { $gte: now } }, [{ $set: { completedQuantity: { $max: [0, { $subtract: ["$completedQuantity", task.completedQuantity] }] } } }]);
+  }
 }
